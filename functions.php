@@ -120,3 +120,160 @@ function email_exists($email) {
     return $stmt->fetchColumn() > 0;
 }
 
+
+/**
+ * Login function.
+ * @param string $username
+ * @param string $password
+ * @return bool|string Returns true on success, otherwise returns an error message.
+ */
+function login($username, $password) {
+    global $pdo;
+    // Validate inputs
+    if (empty($username) || empty($password)) {
+        $_SESSION['error'] = 'Username and password are required.';
+        return false;
+    }
+
+    $stmt = $pdo->prepare('SELECT id, password, role FROM users WHERE username = ?');
+    $stmt->execute([$username]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_role'] = $user['role'];
+        return true; // Login successful
+    } else {
+        return false;
+    }
+}
+
+/**
+ * Update user information in the database.
+ * @param int    $userId
+ * @param string $username
+ * @param string $email
+ * @param string $password
+ * @return bool|string Returns true on success, otherwise returns an error message.
+ */
+function update_user($userId, $username, $email, $password) {
+    global $pdo;
+
+    // Validate inputs
+    if (empty($username) || empty($email)) {
+        return 'Username and email are required.';
+    }
+
+    // Validate email format
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return 'Invalid email address.';
+    }
+
+    // Validate password if provided
+    if (!empty($password)) {
+        // Validate password strength as per your requirements
+        // For simplicity, let's assume a minimum length of 6 characters
+        if (strlen($password) < 6) {
+            return 'Password must be at least 6 characters long.';
+        }
+
+        // Hash the new password
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+
+        // Update user information with the new password
+        $stmt = $pdo->prepare('UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?');
+        $stmt->execute([$username, $email, $password_hash, $userId]);
+    } else {
+        // Update user information without changing the password
+        $stmt = $pdo->prepare('UPDATE users SET username = ?, email = ? WHERE id = ?');
+        $stmt->execute([$username, $email, $userId]);
+    }
+
+    return true; // User information updated successfully
+}
+/**
+ * Get a user's information based on their ID.
+ * @param int $userId
+ * @return array|false Returns an associative array with user information on success, or false if the user is not found.
+ */
+function get_user_info($userId) {
+    global $pdo;
+
+    $stmt = $pdo->prepare('SELECT id, username, email FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+/**
+ * Get a specific number of users for the current page with optional search criteria.
+ * @param int    $limit      Number of users to fetch per page.
+ * @param int    $offset     Offset for the SQL query.
+ * @param string $searchTerm Optional search term for username or email.
+ * @return array
+ */
+function get_users_paginated($limit, $offset, $searchTerm = null) {
+    global $pdo;
+
+    $sql = 'SELECT id, username, email,role FROM users ';
+
+    // Add search criteria if provided
+    if ($searchTerm !== null) {
+        $sql .= 'WHERE username LIKE ? OR email LIKE ? ';
+    }
+
+    $sql .= 'LIMIT ?, ?';
+
+    $stmt = $pdo->prepare($sql);
+
+    // Bind parameters
+    if ($searchTerm !== null) {
+        $searchPattern = "%{$searchTerm}%";
+        $stmt->bindParam(1, $searchPattern, PDO::PARAM_STR);
+        $stmt->bindParam(2, $searchPattern, PDO::PARAM_STR);
+        $stmt->bindParam(3, $offset, PDO::PARAM_INT);
+        $stmt->bindParam(4, $limit, PDO::PARAM_INT);
+    } else {
+        $stmt->bindParam(1, $offset, PDO::PARAM_INT);
+        $stmt->bindParam(2, $limit, PDO::PARAM_INT);
+    }
+
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+/**
+ * Get the total number of users in the database.
+ * @return int
+ */
+function count_all_users() {
+    global $pdo;
+
+    $stmt = $pdo->query('SELECT COUNT(*) FROM users');
+    return $stmt->fetchColumn();
+}
+
+/**
+ * Delete user account from the database.
+ * @param int $userId
+ * @return bool|string Returns true on success, otherwise returns an error message.
+ */
+function delete_user($userId) {
+    global $pdo;
+
+    try {
+        $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
+        $stmt->execute([$userId]);
+        return true; // User account deleted successfully
+    } catch (PDOException $e) {
+        return 'Error deleting user account: ' . $e->getMessage();
+    }
+}
+/**
+ * Logout function.
+ */
+function logout() {
+    session_unset();
+    session_destroy();
+    header('Location: index.php');
+    exit;
+}

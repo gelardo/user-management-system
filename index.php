@@ -6,7 +6,31 @@ require_once 'config.php';
 require_once 'functions.php';
 session_start();
 
+// Check if the form is submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Validate login credentials
+    $username = clean_input($_POST['username']);
+    $password = clean_input($_POST['password']);
 
+    // Check if the credentials match an administrator
+    // Use the login function
+    if (login($username, $password)) {
+       
+        // Redirect to the user management page upon successful login
+        header('Location: users.php');
+        exit;
+    } else {
+        $_SESSION['error'] = $_SESSION['error'].'Invalid username or password.';
+    }
+}
+if (isset($_SESSION['user_id'])) {
+    if(has_role('regular')){
+        header('Location: profile.php');
+    }
+    else{
+        header('Location: users.php');
+    }
+}
 ?>
 
 <!DOCTYPE html>
