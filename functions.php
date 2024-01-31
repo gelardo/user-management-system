@@ -253,6 +253,18 @@ function count_all_users() {
 }
 
 /**
+ * Get user details by ID.
+ * @param int $user_id
+ * @return array|false
+ */
+function get_user_by_id($user_id) {
+    global $pdo;
+
+    $stmt = $pdo->prepare('SELECT id, username, email FROM users WHERE id = ?');
+    $stmt->execute([$user_id]);
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+/**
  * Delete user account from the database.
  * @param int $userId
  * @return bool|string Returns true on success, otherwise returns an error message.
