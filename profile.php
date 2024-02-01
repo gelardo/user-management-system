@@ -52,6 +52,7 @@ if (isset($_GET['logout'])) {
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<div class="container">
 <?php 
 // Include header
 include 'header.php';?>
@@ -100,5 +101,6 @@ if (isset($_POST['delete'])) {
     }
 }
 ?>
+</div>
 </body>
 </html>

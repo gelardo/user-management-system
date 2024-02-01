@@ -15,16 +15,16 @@ if (!has_role('admin')) {
 
 
 // Check if the user ID is provided
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+if (!isset($_GET['user_id']) || !is_numeric($_GET['user_id'])) {
     $_SESSION['error'] = 'Invalid user ID.';
     header('Location: users.php');
     exit;
 }
-
-$user_id = $_GET['id'];
+$user_id = $_GET['user_id'];
 
 // Fetch user details from the database
 $user = get_user_by_id($user_id);
+
 
 // Check if the user exists
 if (!$user) {
@@ -32,9 +32,9 @@ if (!$user) {
     header('Location: users.php');
     exit;
 }
-
 // Check if the form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    
     // Validate user input
     $username = clean_input($_POST['username']);
     $email = clean_input($_POST['email']);
@@ -61,13 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-<?php include 'header.php';?>
     <div class="container">
+        
+    <?php include 'header.php';?>
         <h2>Edit User</h2>
 
         <?php include 'messages.php'; ?>
 
-        <form action="edit.php?id=<?= $user_id; ?>" method="post">
+        <form action="edit.php?user_id=<?= $user_id; ?>" method="post">
             <label for="username">Username:</label>
             <input type="text" name="username" value="<?= $user['username']; ?>" required>
 

@@ -73,7 +73,8 @@ if (isset($_GET['delete_user'])) {
         <h2>User Listing</h2>
 
         <?php include 'messages.php'; ?>
-
+        <!-- Button for creating a new user -->
+        <span style="float:right"><a href="create.php" class="button">Create New User</a></span>
                 
         <!-- Display the list of users -->
         <table>
@@ -95,6 +96,10 @@ if (isset($_GET['delete_user'])) {
                         <!-- Add more columns as needed -->
                         <?php if (has_role('admin')): ?>
                             <td>
+                                <form method="get" action="/edit.php?id=<?= $user['id'];?>">
+                                    <input type="hidden" name="user_id" value="<?= $user['id']; ?>">
+                                    <button type="submit" onclick="return confirm('Are you sure?')">Edit</button>
+                                </form>
                                 <form method="post" action="?delete_user=<?= $user['id'];?>">
                                     <input type="hidden" name="user_id" value="<?= $user['id']; ?>">
                                     <button type="submit" onclick="return confirm('Are you sure?')">Delete</button>
